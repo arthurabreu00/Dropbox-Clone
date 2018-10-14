@@ -40,32 +40,29 @@ class DropBoxController {
 
     getSelection() {
 
-        return this.listFilesEl.querySelectorAll('.selected')
+        return this.listFilesEl.querySelectorAll('.selected');
 
     }
 
-    removeTask() {
-
+    removeTask(){
+ 
         let promises = [];
-
-        this.getSelection().forEach(li => {
-
+     
+        this.getSelection().forEach(li=>{
+     
             let file = JSON.parse(li.dataset.file);
-            let key = li.dataset.key
-
+     
             let formData = new FormData();
-
-            formData.append('path',file.path)
-            formData.append('key',key)
-
-            promises.push(this.ajax('/files','DELETE',formData));
-
-            
+     
+            formData.append('path', file.path);
+            formData.append('key', file.key);
+     
+            promises.push(this.ajax('/file', 'DELETE', formData));
+     
         });
-
+     
         return Promise.all(promises);
-
-
+     
     }
 
     initEvents() {
@@ -74,13 +71,13 @@ class DropBoxController {
 
             this.removeTask().then(responses => {
                 
-                responses.forEach(resp =>{
+                responses.forEach(response =>{
 
-                    if(resp.fields.key){
-                        this.getFireBaseRef().child(resp.fields.key).remove();
+                    if(response.fields.key){
+                        this.getFireBaseRef().child(response.fields.key).remove();
                     }
 
-                })
+                });
 
             }).catch(err => {
 
@@ -102,7 +99,6 @@ class DropBoxController {
             if (name) {
                 file.name = name;
                 this.getFireBaseRef().child(li.dataset.key).set(file);
-
             }
         })
 
@@ -111,18 +107,18 @@ class DropBoxController {
             switch (this.getSelection().length) {
 
                 case 0:
-                    this.btnDeleteEl.style.display = 'none'
-                    this.btnRenameEl.style.display = 'none'
+                    this.btnDeleteEl.style.display = 'none';
+                    this.btnRenameEl.style.display = 'none';
                     break;
 
                 case 1:
-                    this.btnDeleteEl.style.display = 'block'
-                    this.btnRenameEl.style.display = 'block'
+                    this.btnDeleteEl.style.display = 'block';
+                    this.btnRenameEl.style.display = 'block';
                     break;
 
                 default:
-                    this.btnDeleteEl.style.display = 'block'
-                    this.btnRenameEl.style.display = 'none'
+                    this.btnDeleteEl.style.display = 'block';
+                    this.btnRenameEl.style.display = 'none';
                     break;
 
             }
@@ -144,9 +140,9 @@ class DropBoxController {
 
                     this.getFireBaseRef().push().set(resp.files['input-file'])
 
-                })
+                });
 
-                this.uploadComplete()
+                this.uploadComplete();
 
             }).catch(err => {
 
@@ -172,7 +168,7 @@ class DropBoxController {
 
     getFireBaseRef() {
 
-        return firebase.database().ref('files')
+        return firebase.database().ref('files');
 
     }
 
@@ -182,40 +178,38 @@ class DropBoxController {
 
     }
 
-    ajax(url, method = 'GET', formData = new FormData(), onprogress = function (){}, 
-            onloadStart = function (){}) {
-
-        return new Promise((resolve, reject) => {
-
+    ajax(url, method = 'GET', formData = new FormData(), onprogress = function(){}, onloadstart = function(){}){
+ 
+        return new Promise((resolve, reject) =>{
+ 
             let ajax = new XMLHttpRequest();
-
-            ajax.open(method, url)
-
-            ajax.onload = event => {
-
-                try {
-                    resolve(JSON.parse(ajax.responseText))
-                } catch (event) {
-                    reject(event)
+ 
+            ajax.open(method, url);
+ 
+            ajax.onload = event =>{
+                try {   
+                    
+                    resolve(JSON.parse(ajax.responseText));
+ 
+                } catch (e) {
+                    
+                    reject(e);
                 }
-
             };
-
-            ajax.onerror = event => {
-
-                this.uploadComplete()
+ 
+            ajax.onerror = event =>{
+ 
                 reject(event);
+ 
             };
-
-            ajax.upload.onprogress = onprogress;
-
+ 
+            ajax.upload.onprogress = onprogress;           
+ 
             onloadstart();
-
+ 
             ajax.send(formData);
-
-        })
-
-
+        });        
+ 
     }
 
     uploadTask(files) {
@@ -251,7 +245,7 @@ class DropBoxController {
         this.progressBarEl.style.width = porc + '%';
 
         this.fileNameEl.innerHTML = file.name;
-        this.timeLeftEl.innerHTML = this.formatTime(timeleft)
+        this.timeLeftEl.innerHTML = this.formatTime(timeleft);
 
     }
 
@@ -356,7 +350,7 @@ class DropBoxController {
                         M81.955,86.183c-0.912,0.01-2.209,0.098-1.733-1.421c0.264-0.841,0.955-2.04,1.622-2.162c1.411-0.259,1.409,1.421,2.049,2.186
                         C84.057,86.456,82.837,86.174,81.955,86.183z M96.229,94.8c-1.14-0.082-1.692-1.111-1.785-2.033
                         c-0.131-1.296,1.072-0.867,1.753-0.876c0.796-0.011,1.668,0.118,1.588,1.293C97.394,93.857,97.226,94.871,96.229,94.8z"></path>
-            </svg>`
+            </svg>`;
                 break;
 
 
@@ -511,7 +505,7 @@ class DropBoxController {
 
                         if (i >= index[0] && i <= index[1]) {
 
-                            el.classList.add('selected')
+                            el.classList.add('selected');
 
                         }
 
@@ -530,8 +524,8 @@ class DropBoxController {
                 });
             }
 
-            li.classList.toggle('selected')
-            this.listFilesEl.dispatchEvent(this.onselectchange)
+            li.classList.toggle('selected');
+            this.listFilesEl.dispatchEvent(this.onselectchange);
 
         });
 
