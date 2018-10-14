@@ -5,10 +5,19 @@ class DropBoxController {
         this.btnSendFileEl = document.querySelector('#btn-send-file');
         this.inputFilesEl = document.querySelector('#files');
         this.snackModalEl = document.querySelector('#react-snackbar-root');
+
+
         this.progressBarEl = this.snackModalEl.querySelector('.mc-progress-bar-fg');
+        this.listFilesEl = document.querySelector("#list-of-files-and-directories");
         this.fileNameEl = this.snackModalEl.querySelector('.filename');
         this.timeLeftEl = this.snackModalEl.querySelector('.timeleft');
-        this.listFilesEl = document.querySelector("#list-of-files-and-directories");
+
+
+        this.btnNewFolderEl = document.querySelector('#btn-new-folder');
+        this.btnRenameEl = document.querySelector('#btn-rename')
+        this.btnDeleteEl = document.querySelector('#btn-delete')
+
+        this.onselectchange = new Event('selectionchange');
 
         this.connectFirebase();
         this.initEvents();
@@ -29,7 +38,96 @@ class DropBoxController {
         firebase.initializeApp(config);
     }
 
+    getSelection() {
+
+        return this.listFilesEl.querySelectorAll('.selected')
+
+    }
+
+    removeTask() {
+
+        let promises = [];
+
+        this.getSelection().forEach(li => {
+
+            let file = JSON.parse(li.dataset.file);
+            let key = li.dataset.key
+
+            let formData = new FormData();
+
+            formData.append('path',file.path)
+            formData.append('key',key)
+
+            promises.push(this.ajax('/files','DELETE',formData));
+
+            
+        });
+
+        return Promise.all(promises);
+
+
+    }
+
     initEvents() {
+
+        this.btnDeleteEl.addEventListener('click', e => {
+
+            this.removeTask().then(responses => {
+                
+                responses.forEach(resp =>{
+
+                    if(resp.fields.key){
+                        this.getFireBaseRef().child(resp.fields.key).remove();
+                    }
+
+                })
+
+            }).catch(err => {
+
+                console.error(err);
+
+            });
+
+        });
+
+
+        this.btnRenameEl.addEventListener('click', () => {
+
+            let li = this.getSelection()[0];
+
+            let file = JSON.parse(li.dataset.file);
+
+            let name = prompt('Renomear o arquivo: ', file.name)
+
+            if (name) {
+                file.name = name;
+                this.getFireBaseRef().child(li.dataset.key).set(file);
+
+            }
+        })
+
+        this.listFilesEl.addEventListener('selectionchange', () => {
+
+            switch (this.getSelection().length) {
+
+                case 0:
+                    this.btnDeleteEl.style.display = 'none'
+                    this.btnRenameEl.style.display = 'none'
+                    break;
+
+                case 1:
+                    this.btnDeleteEl.style.display = 'block'
+                    this.btnRenameEl.style.display = 'block'
+                    break;
+
+                default:
+                    this.btnDeleteEl.style.display = 'block'
+                    this.btnRenameEl.style.display = 'none'
+                    break;
+
+            }
+
+        })
 
         this.btnSendFileEl.addEventListener('click', () => {
 
@@ -84,47 +182,56 @@ class DropBoxController {
 
     }
 
+    ajax(url, method = 'GET', formData = new FormData(), onprogress = function (){}, 
+            onloadStart = function (){}) {
+
+        return new Promise((resolve, reject) => {
+
+            let ajax = new XMLHttpRequest();
+
+            ajax.open(method, url)
+
+            ajax.onload = event => {
+
+                try {
+                    resolve(JSON.parse(ajax.responseText))
+                } catch (event) {
+                    reject(event)
+                }
+
+            };
+
+            ajax.onerror = event => {
+
+                this.uploadComplete()
+                reject(event);
+            };
+
+            ajax.upload.onprogress = onprogress;
+
+            onloadstart();
+
+            ajax.send(formData);
+
+        })
+
+
+    }
+
     uploadTask(files) {
 
         let promises = [];
 
         [...files].forEach(file => {
 
-            promises.push(new Promise((resolve, reject) => {
+            let formData = new FormData();
 
-                let ajax = new XMLHttpRequest();
+            formData.append('input-file', file);
 
-                ajax.open('POST', '/upload')
-
-                ajax.onload = event => {
-
-                    try {
-                        resolve(JSON.parse(ajax.responseText))
-                    } catch (e) {
-                        reject(e)
-                    }
-
-                };
-
-                ajax.onerror = event => {
-
-                    this.uploadComplete()
-                    reject(event);
-                };
-
-                ajax.upload.onprogress = event => {
-
-                    this.uploadProgress(event, file);
-                }
-
-                let formData = new FormData();
-
-                formData.append('input-file', file);
-
-                this.startUploadTime = Date.now()
-
-                ajax.send(formData);
-
+            promises.push(this.ajax('/upload', 'POST', formData, () => {
+                this.uploadProgress(event, file)
+            }, () => {
+                this.startUploadTime = Date.now();
             }));
 
         });
@@ -343,6 +450,7 @@ class DropBoxController {
         let li = document.createElement('li');
 
         li.dataset.key = key;
+        li.dataset.file = JSON.stringify(file);
 
         li.innerHTML = `<li>
                         ${this.getFileIconView(file)}
@@ -377,28 +485,53 @@ class DropBoxController {
 
     initEventsLi(li) {
 
-        li.addEventListener('click', e=> {
+        li.addEventListener('click', e => {
 
-            if(e.shiftKey){
+            if (e.shiftKey) {
 
-                let firstItem = this.listFilesEl.querySelector('selected');
+                let firstLi = this.listFilesEl.querySelector('.selected');
 
-                if(firstItem){
+                if (firstLi) {
 
-                    console.log(firstItem)
+                    let indexStart;
+                    let indexEnd;
+                    let lis = li.parentElement.childNodes
+
+                    lis.forEach((el, index) => {
+
+                        if (firstLi === el) indexStart = index;
+                        if (li === el) indexEnd = index;
+
+                    });
+
+                    let index = [indexStart, indexEnd].sort();
+
+
+                    lis.forEach((el, i) => {
+
+                        if (i >= index[0] && i <= index[1]) {
+
+                            el.classList.add('selected')
+
+                        }
+
+                    });
+
+                    return true;
+
 
                 }
 
             }
 
-            else if (e.crtlKey) {
+            else if (!e.ctrlKey) {
                 this.listFilesEl.querySelectorAll('li.selected').forEach(el => {
                     el.classList.remove('selected');
                 });
             }
 
             li.classList.toggle('selected')
-
+            this.listFilesEl.dispatchEvent(this.onselectchange)
 
         });
 
