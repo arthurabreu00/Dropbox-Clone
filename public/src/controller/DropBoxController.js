@@ -153,8 +153,6 @@ class DropBoxController {
 
             this.modalShow(true);
 
-
-
         })
     }
 
