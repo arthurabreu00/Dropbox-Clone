@@ -51,6 +51,9 @@ class DropBoxController {
         this.getSelection().forEach(li=>{
      
             let file = JSON.parse(li.dataset.file);
+            let key = li.dataset.key;
+            
+            console.log(key)
      
             let formData = new FormData();
      

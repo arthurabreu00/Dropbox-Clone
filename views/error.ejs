@@ -1,8 +1,11 @@
 <!DOCTYPE html>
+<head>
+   <title> Error </title> 
+</head>
 <html>
 <body>
 
-<p>Press a key on the keyboard in the input field to find out if the CTRL key was pressed or not.</p>
+<p>PRESSIONE CRTL.</p>
 
 <input type="text" onkeydown="isKeyPressed(event)">
 
@@ -12,9 +15,9 @@
 function isKeyPressed(event) {
     var x = document.getElementById("demo");
     if (event.ctrlKey) {
-        x.innerHTML = "The CTRL key was pressed!";
+        x.innerHTML = "O CRTL está pressionado !";
     } else {
-        x.innerHTML = "The CTRL key was NOT pressed!";
+        x.innerHTML = "O CRTL não está pressionado !";
     }
 }
 </script>
