@@ -39,8 +39,6 @@ router.delete('/file',(req,res) =>{
       });
 
     }
-
-    res.json({files});
   })
 
 })

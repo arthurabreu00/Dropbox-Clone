@@ -2,6 +2,8 @@ class DropBoxController {
 
     constructor() {
 
+        this.currentFolder = ['arthur'];
+
         this.btnSendFileEl = document.querySelector('#btn-send-file');
         this.inputFilesEl = document.querySelector('#files');
         this.snackModalEl = document.querySelector('#react-snackbar-root');
@@ -44,39 +46,57 @@ class DropBoxController {
 
     }
 
-    removeTask(){
- 
+    removeTask() {
+
         let promises = [];
-     
-        this.getSelection().forEach(li=>{
-     
+
+        this.getSelection().forEach(li => {
+
             let file = JSON.parse(li.dataset.file);
             let key = li.dataset.key;
-            
+
             console.log(key)
-     
+
             let formData = new FormData();
-     
+
             formData.append('path', file.path);
-            formData.append('key', file.key);
-     
+            formData.append('key', key);
+
             promises.push(this.ajax('/file', 'DELETE', formData));
-     
+
         });
-     
+
         return Promise.all(promises);
-     
+
     }
 
     initEvents() {
 
+        this.btnNewFolderEl.addEventListener('click', () =>{
+
+            let name = prompt('Nome da nova pasta: ');
+
+            if(name){
+
+                this.getFireBaseRef().push().set({
+
+                    name,
+                    type: 'folder',
+                    path: this.currentFolder.join('/'),
+
+                });
+
+            };
+
+        });
+
         this.btnDeleteEl.addEventListener('click', e => {
 
             this.removeTask().then(responses => {
-                
-                responses.forEach(response =>{
 
-                    if(response.fields.key){
+                responses.forEach(response => {
+
+                    if (response.fields.key) {
                         this.getFireBaseRef().child(response.fields.key).remove();
                     }
 
@@ -179,38 +199,38 @@ class DropBoxController {
 
     }
 
-    ajax(url, method = 'GET', formData = new FormData(), onprogress = function(){}, onloadstart = function(){}){
- 
-        return new Promise((resolve, reject) =>{
- 
+    ajax(url, method = 'GET', formData = new FormData(), onprogress = function () { }, onloadstart = function () { }) {
+
+        return new Promise((resolve, reject) => {
+
             let ajax = new XMLHttpRequest();
- 
+
             ajax.open(method, url);
- 
-            ajax.onload = event =>{
-                try {   
-                    
+
+            ajax.onload = event => {
+                try {
+
                     resolve(JSON.parse(ajax.responseText));
- 
+
                 } catch (e) {
-                    
+
                     reject(e);
                 }
             };
- 
-            ajax.onerror = event =>{
- 
+
+            ajax.onerror = event => {
+
                 reject(event);
- 
+
             };
- 
-            ajax.upload.onprogress = onprogress;           
- 
+
+            ajax.upload.onprogress = onprogress;
+
             onloadstart();
- 
+
             ajax.send(formData);
-        });        
- 
+        });
+
     }
 
     uploadTask(files) {
